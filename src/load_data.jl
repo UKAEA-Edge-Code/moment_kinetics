@@ -260,11 +260,12 @@ function load_coordinate_data(fid, name; printout=false, irank=nothing, nrank=no
     discretization = load_variable(coord_group, "discretization")
     fd_option = load_variable(coord_group, "fd_option")
     bc = load_variable(coord_group, "bc")
+    element_spacing_option = load_variable(coord_group, "element_spacing_option")
 
     # Define input to create coordinate struct
     input = grid_input(name, ngrid, nelement_global, nelement_local, nrank, irank, L,
                        discretization, fd_option, bc, advection_input("", 0.0, 0.0, 0.0),
-                       MPI.COMM_NULL)
+                       MPI.COMM_NULL, element_spacing_option)
 
     coord, spectral = define_coordinate(input, parallel_io)
 

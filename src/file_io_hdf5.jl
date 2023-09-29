@@ -8,8 +8,16 @@ function io_has_parallel(::Val{hdf5})
 end
 
 function open_output_file_hdf5(prefix, parallel_io, io_comm, mode="cw")
+#function open_output_file_hdf5(prefix, parallel_io, io_comm, mode="cw"; kwargs...)
     # the hdf5 file will be given by output_dir/run_name with .h5 appended
     filename = string(prefix, ".h5")
+
+    ## Create properties that allow us to use single-writer-multiple-reader (SWMR)
+    ## features, which were introduced in HDF5-1.10
+    #fapl = HDF5.FileAccessProperties()
+    ##fapl.libver_bounds = (v"1.10", :latest)
+    #fapl.libver_bounds = (:latest, :latest)
+
     # create the new HDF5 file
     if parallel_io
         # if a file with the requested name already exists, remove it
@@ -19,12 +27,19 @@ function open_output_file_hdf5(prefix, parallel_io, io_comm, mode="cw")
         MPI.Barrier(io_comm)
 
         fid = h5open(filename, mode, io_comm)
+        ## Because we pass a 'file access property list' fapl, we have to explicitly create
+        ## the MPIO driver using io_comm, as the h5open() method that takes an MPI
+        ## communicator as an argument does not allow fapl to be passed in addition.
+        #fapl.driver = HDF5.Drivers.MPIO(io_comm, MPI.Info())
+
+        #fid = h5open(filename, mode, fapl; kwargs...)
     else
         # if a file with the requested name already exists, remove it
         mode == "cw" && isfile(filename) && rm(filename)
 
         # Not doing parallel I/O, so do not need to pass communicator
         fid = h5open(filename, mode)
+        #fid = h5open(filename, mode, fapl; kwargs...)
     end
 
     return fid, (filename, parallel_io, io_comm)

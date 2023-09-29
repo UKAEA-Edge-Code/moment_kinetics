@@ -52,6 +52,7 @@ function open_readonly_output_file(run_name, ext; iblock=0, printout=false)
         end
         # open the HDF5 file with given filename for reading
         fid = h5open(filename, "r")
+        #fid = h5open(filename, "r"; swmr=true)
     else
         if printout
             print("Opening ", filename, " to read NetCDF data...")

@@ -857,6 +857,7 @@ function reopen_output_file(filename, parallel_io, io_comm)
     prefix, format_string = splitext(filename)
     if format_string == ".h5"
         return open_output_file_hdf5(prefix, parallel_io, io_comm, "r+")[1]
+        #return open_output_file_hdf5(prefix, parallel_io, io_comm, "r+"; swmr=true)[1]
     elseif format_string == ".cdf"
         return open_output_file_netcdf(prefix, parallel_io, io_comm, "a")[1]
     else

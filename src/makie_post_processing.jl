@@ -3881,16 +3881,19 @@ Any extra `kwargs` are passed to [`plot_1d`](@ref).
 """
 function plot_f_unnorm_vs_vpa end
 
-function plot_f_unnorm_vs_vpa(run_info::Tuple; neutral=false, outfile=nothing,
-                              axis_args=Dict{Symbol,Any}(), kwargs...)
+function plot_f_unnorm_vs_vpa(run_info::Tuple; f_over_vpa2=false, neutral=false,
+                              outfile=nothing, axis_args=Dict{Symbol,Any}(), kwargs...)
     try
         n_runs = length(run_info)
 
-        ylabel = neutral ? L"f_{n,\mathrm{unnormalized}}" : L"f_{i,\mathrm{unnormalized}}"
+        species_label = neutral ? "n" : "i"
+        divide_by = f_over_vpa2 ? L"/v_\parallel^2" : ""
+        ylabel = L"f_{%$species_label,\mathrm{unnormalized}}%$divide_by"
         fig, ax = get_1d_ax(; xlabel=L"v_\parallel", ylabel=ylabel, axis_args...)
 
         for ri ∈ run_info
-            plot_f_unnorm_vs_vpa(ri; neutral=neutral, ax=ax, kwargs...)
+            plot_f_unnorm_vs_vpa(ri; f_over_vpa2=f_over_vpa2, neutral=neutral, ax=ax,
+                                 kwargs...)
         end
 
         if n_runs > 1
@@ -3907,9 +3910,10 @@ function plot_f_unnorm_vs_vpa(run_info::Tuple; neutral=false, outfile=nothing,
     end
 end
 
-function plot_f_unnorm_vs_vpa(run_info; input=nothing, neutral=false, it=nothing, is=1,
-                              iz=nothing, fig=nothing, ax=nothing, outfile=nothing,
-                              transform=identity, axis_args=Dict{Symbol,Any}(), kwargs...)
+function plot_f_unnorm_vs_vpa(run_info; f_over_vpa2=false, input=nothing, neutral=false,
+                              it=nothing, is=1, iz=nothing, fig=nothing, ax=nothing,
+                              outfile=nothing, transform=identity,
+                              axis_args=Dict{Symbol,Any}(), kwargs...)
     if input === nothing
         if neutral
             input = Dict_to_NamedTuple(input_dict_dfns["f_neutral"])
@@ -3928,7 +3932,9 @@ function plot_f_unnorm_vs_vpa(run_info; input=nothing, neutral=false, it=nothing
     end
 
     if ax === nothing
-        ylabel = neutral ? L"f_{n,\mathrm{unnormalized}}" : L"f_{i,\mathrm{unnormalized}}"
+        species_label = neutral ? "n" : "i"
+        divide_by = f_over_vpa2 ? L"/v_\parallel^2" : ""
+        ylabel = L"f_{%$species_label,\mathrm{unnormalized}}%$divide_by"
         fig, ax = get_1d_ax(; xlabel=L"v_\parallel", ylabel=ylabel, axis_args...)
     end
 
@@ -3955,6 +3961,10 @@ function plot_f_unnorm_vs_vpa(run_info; input=nothing, neutral=false, it=nothing
                                                 run_info.evolve_density,
                                                 run_info.evolve_upar,
                                                 run_info.evolve_ppar)
+
+    if f_over_vpa2
+        @. f_unnorm /= dzdt^2
+    end
 
     f_unnorm = transform.(f_unnorm)
 
@@ -4189,14 +4199,16 @@ we have to handle time-varying coordinates so cannot use [`animate_1d`](@ref)).
 """
 function animate_f_unnorm_vs_vpa end
 
-function animate_f_unnorm_vs_vpa(run_info::Tuple; neutral=false, outfile=nothing,
-                                 axis_args=Dict{Symbol,Any}(), kwargs...)
+function animate_f_unnorm_vs_vpa(run_info::Tuple; f_over_vpa2=false, neutral=false,
+                                 outfile=nothing, axis_args=Dict{Symbol,Any}(), kwargs...)
     try
         n_runs = length(run_info)
 
         frame_index = Observable(1)
 
-        ylabel = neutral ? L"f_{n,\mathrm{unnormalized}}" : L"f_{i,\mathrm{unnormalized}}"
+        species_label = neutral ? "n" : "i"
+        divide_by = f_over_vpa2 ? L"/v_\parallel^2" : ""
+        ylabel = L"f_{%$species_label,\mathrm{unnormalized}}%$divide_by"
         if length(run_info) == 1 || all(all(isapprox.(ri.time, run_info[1].time)) for ri ∈ run_info[2:end])
             # All times are the same
             title = lift(i->LaTeXString(string("t = ", run_info[1].time[i])), frame_index)
@@ -4209,8 +4221,8 @@ function animate_f_unnorm_vs_vpa(run_info::Tuple; neutral=false, outfile=nothing
                             axis_args...)
 
         for ri ∈ run_info
-            animate_f_unnorm_vs_vpa(ri; neutral=neutral, ax=ax, frame_index=frame_index,
-                                    kwargs...)
+            animate_f_unnorm_vs_vpa(ri; f_over_vpa2=f_over_vpa2, neutral=neutral, ax=ax,
+                                    frame_index=frame_index, kwargs...)
         end
 
         if n_runs > 1
@@ -4228,9 +4240,9 @@ function animate_f_unnorm_vs_vpa(run_info::Tuple; neutral=false, outfile=nothing
     end
 end
 
-function animate_f_unnorm_vs_vpa(run_info; input=nothing, neutral=false, is=1, iz=nothing,
-                                 fig=nothing, ax=nothing, frame_index=nothing,
-                                 outfile=nothing, transform=identity,
+function animate_f_unnorm_vs_vpa(run_info; f_over_vpa2=false, input=nothing,
+                                 neutral=false, is=1, iz=nothing, fig=nothing, ax=nothing,
+                                 frame_index=nothing, outfile=nothing, transform=identity,
                                  axis_args=Dict{Symbol,Any}(), kwargs...)
     if input === nothing
         if neutral
@@ -4249,7 +4261,9 @@ function animate_f_unnorm_vs_vpa(run_info; input=nothing, neutral=false, is=1, i
     if ax === nothing
         frame_index = Observable(1)
         title = lift(i->LaTeXString(string("t = ", run_info.time[i])), frame_index)
-        ylabel = neutral ? L"f_{n,\mathrm{unnormalized}}" : L"f_{i,\mathrm{unnormalized}}"
+        species_label = neutral ? "n" : "i"
+        divide_by = f_over_vpa2 ? L"/v_\parallel^2" : ""
+        ylabel = L"f_{%$species_label,\mathrm{unnormalized}}%$divide_by"
         fig, ax = get_1d_ax(; xlabel=L"v_\parallel", ylabel=ylabel, title=title,
                             axis_args...)
     end
@@ -4275,6 +4289,19 @@ function animate_f_unnorm_vs_vpa(run_info; input=nothing, neutral=false, is=1, i
         vth = postproc_load_variable(run_info, "thermal_speed"; is=is, ir=input.ir0, iz=iz)
     end
 
+    function get_this_f_unnorm(it)
+        f_unnorm = get_unnormalised_f_1d(get_cache_slice(f, it), density[it], vth[it],
+                                         run_info.evolve_density, run_info.evolve_ppar)
+
+        if f_over_vpa2
+            dzdt = vpagrid_to_dzdt(run_info.vpa.grid, vth[it], upar[it],
+                                   run_info.evolve_ppar, run_info.evolve_upar)
+            f_unnorm = @. copy(f_unnorm) / dzdt^2
+        end
+
+        return f_unnorm
+    end
+
     # Get extrema of dzdt
     dzdtmin = Inf
     dzdtmax = -Inf
@@ -4287,9 +4314,8 @@ function animate_f_unnorm_vs_vpa(run_info; input=nothing, neutral=false, is=1, i
         dzdtmin = min(dzdtmin, this_dzdtmin)
         dzdtmax = max(dzdtmax, this_dzdtmax)
 
-        this_f_unnorm = get_unnormalised_f_1d(get_cache_slice(f, it), density[it],
-                                              vth[it], run_info.evolve_density,
-                                              run_info.evolve_ppar)
+        this_f_unnorm = get_this_f_unnorm(it)
+
         this_fmin, this_fmax = NaNMath.extrema(transform(this_f_unnorm))
         fmin = min(fmin, this_fmin)
         fmax = max(fmax, this_fmax)
@@ -4301,10 +4327,7 @@ function animate_f_unnorm_vs_vpa(run_info; input=nothing, neutral=false, is=1, i
 
     dzdt = @lift vpagrid_to_dzdt(run_info.vpa.grid, vth[$frame_index], upar[$frame_index],
                                  run_info.evolve_ppar, run_info.evolve_upar)
-    f_unnorm = @lift transform.(get_unnormalised_f_1d(
-                                    get_cache_slice(f, $frame_index),
-                                    density[$frame_index], vth[$frame_index],
-                                    run_info.evolve_density, run_info.evolve_ppar))
+    f_unnorm = @lift transform.(get_this_f_unnorm($frame_index))
 
     l = plot_1d(dzdt, f_unnorm; ax=ax, label=run_info.run_name, kwargs...)
 
@@ -4568,6 +4591,9 @@ function plot_charged_pdf_2D_at_wall(run_info; plot_prefix)
                                      outfile=plot_prefix * "pdf_unnorm_$(label)_vs_vpa.pdf")
             end
 
+            plot_f_unnorm_vs_vpa(run_info; f_over_vpa2=true, input=f_input, is=1,
+                                 outfile=plot_prefix * "pdf_unnorm_over_vpa2_$(label)_vs_vpa.pdf")
+
             if !is_1V
                 plot_vs_vpa_vperp(run_info, "f"; is=1, input=f_input,
                                   outfile=plot_prefix * "pdf_$(label)_vs_vpa_vperp.pdf")
@@ -4593,6 +4619,9 @@ function plot_charged_pdf_2D_at_wall(run_info; plot_prefix)
                 animate_f_unnorm_vs_vpa(run_info; input=f_input, is=1,
                                         outfile=plot_prefix * "pdf_unnorm_$(label)_vs_vpa." * input.animation_ext)
             end
+
+            animate_f_unnorm_vs_vpa(run_info; f_over_vpa2=true, input=f_input, is=1,
+                                    outfile=plot_prefix * "pdf_unnorm_over_vpa2_$(label)_vs_vpa." * input.animation_ext)
 
             if !is_1V
                 animate_vs_vpa_vperp(run_info, "f"; is=1, input=f_input,

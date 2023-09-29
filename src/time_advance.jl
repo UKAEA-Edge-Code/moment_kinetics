@@ -1268,9 +1268,12 @@ function rk_update!(scratch, pdf, moments, fields, boundary_distributions, vz, v
     # update the charged particle distribution and moments
     ##
 
-    @loop_s_r_z_vperp_vpa is ir iz ivperp ivpa begin
-        new_scratch.pdf[ivpa,ivperp,iz,ir,is] = rk_coefs[1]*pdf.charged.norm[ivpa,ivperp,iz,ir,is] + rk_coefs[2]*old_scratch.pdf[ivpa,ivperp,iz,ir,is] + rk_coefs[3]*new_scratch.pdf[ivpa,ivperp,iz,ir,is]
+    function temp1()
+        @loop_s_r_z_vperp_vpa is ir iz ivperp ivpa begin
+            new_scratch.pdf[ivpa,ivperp,iz,ir,is] = rk_coefs[1]*pdf.charged.norm[ivpa,ivperp,iz,ir,is] + rk_coefs[2]*old_scratch.pdf[ivpa,ivperp,iz,ir,is] + rk_coefs[3]*new_scratch.pdf[ivpa,ivperp,iz,ir,is]
+        end
     end
+    temp1()
     # use Runge Kutta to update any velocity moments evolved separately from the pdf
     rk_update_evolved_moments!(new_scratch, old_scratch, moments, rk_coefs)
 
@@ -1286,9 +1289,12 @@ function rk_update!(scratch, pdf, moments, fields, boundary_distributions, vz, v
         # enforce_boundary_conditions!()
         begin_s_r_z_region()
         try #below block causes DomainError if ppar < 0 or density, so exit cleanly if possible
-            @loop_s_r_z is ir iz begin
-                moments.charged.vth[iz,ir,is] = sqrt(2.0*new_scratch.ppar[iz,ir,is]/new_scratch.density[iz,ir,is])
+            function temp2()
+                @loop_s_r_z is ir iz begin
+                    moments.charged.vth[iz,ir,is] = sqrt(2.0*new_scratch.ppar[iz,ir,is]/new_scratch.density[iz,ir,is])
+                end
             end
+            temp2()
             @serial_region begin
                 if any(new_scratch.density .=== NaN)
                     error("Found NaN in density")
@@ -1313,11 +1319,14 @@ function rk_update!(scratch, pdf, moments, fields, boundary_distributions, vz, v
         advance.r_diffusion, advance.vpa_diffusion)
 
     if moments.evolve_density && moments.enforce_conservation
-        begin_s_r_z_region()
-        @loop_s_r_z is ir iz begin
-            @views hard_force_moment_constraints!(new_scratch.pdf[:,:,iz,ir,is], moments,
-                                                  vpa)
+        function temp3()
+            begin_s_r_z_region()
+            @loop_s_r_z is ir iz begin
+                @views hard_force_moment_constraints!(new_scratch.pdf[:,:,iz,ir,is], moments,
+                                                      vpa)
+            end
         end
+        temp3()
     end
 
     # update remaining velocity moments that are calculable from the evolved pdf
@@ -1326,16 +1335,19 @@ function rk_update!(scratch, pdf, moments, fields, boundary_distributions, vz, v
         # update the thermal speed
         begin_s_r_z_region()
         try #below block causes DomainError if ppar < 0 or density, so exit cleanly if possible
-            @loop_s_r_z is ir iz begin
-                moments.charged.vth[iz,ir,is] = sqrt(2.0 * new_scratch.ppar[iz,ir,is] /
-                                                     new_scratch.density[iz,ir,is])
-            end
-            @serial_region begin
-                if any(@. new_scratch.density === NaN || new_scratch.density === Inf ||
-                       new_scratch.density === -Inf)
-                    error("Found NaN in density")
+            function temp4()
+                @loop_s_r_z is ir iz begin
+                    moments.charged.vth[iz,ir,is] = sqrt(2.0 * new_scratch.ppar[iz,ir,is] /
+                                                         new_scratch.density[iz,ir,is])
+                end
+                @serial_region begin
+                    if any(@. new_scratch.density === NaN || new_scratch.density === Inf ||
+                           new_scratch.density === -Inf)
+                        error("Found NaN in density")
+                    end
                 end
             end
+            temp4()
         catch e
             global_catch_error(e)
         else
@@ -1357,11 +1369,14 @@ function rk_update!(scratch, pdf, moments, fields, boundary_distributions, vz, v
     ##
 
     if composition.n_neutral_species > 0
-        begin_sn_r_z_region()
-        @loop_sn_r_z_vzeta_vr_vz isn ir iz ivzeta ivr ivz begin
-            new_scratch.pdf_neutral[ivz,ivr,ivzeta,iz,ir,isn] = ( rk_coefs[1]*pdf.neutral.norm[ivz,ivr,ivzeta,iz,ir,isn]
-             + rk_coefs[2]*old_scratch.pdf_neutral[ivz,ivr,ivzeta,iz,ir,isn] + rk_coefs[3]*new_scratch.pdf_neutral[ivz,ivr,ivzeta,iz,ir,isn])
+        function temp5()
+            begin_sn_r_z_region()
+            @loop_sn_r_z_vzeta_vr_vz isn ir iz ivzeta ivr ivz begin
+                new_scratch.pdf_neutral[ivz,ivr,ivzeta,iz,ir,isn] = ( rk_coefs[1]*pdf.neutral.norm[ivz,ivr,ivzeta,iz,ir,isn]
+                 + rk_coefs[2]*old_scratch.pdf_neutral[ivz,ivr,ivzeta,iz,ir,isn] + rk_coefs[3]*new_scratch.pdf_neutral[ivz,ivr,ivzeta,iz,ir,isn])
+            end
         end
+        temp5()
         # use Runge Kutta to update any velocity moments evolved separately from the pdf
         rk_update_evolved_moments_neutral!(new_scratch, old_scratch, moments, rk_coefs)
 
@@ -1378,9 +1393,12 @@ function rk_update!(scratch, pdf, moments, fields, boundary_distributions, vz, v
             # update the thermal speed
             begin_sn_r_z_region()
             try
-                @loop_sn_r_z isn ir iz begin
-                    moments.neutral.vth[iz,ir,isn] = sqrt(2.0*new_scratch.pz_neutral[iz,ir,isn]/new_scratch.density_neutral[iz,ir,isn])
+                function temp6()
+                    @loop_sn_r_z isn ir iz begin
+                        moments.neutral.vth[iz,ir,isn] = sqrt(2.0*new_scratch.pz_neutral[iz,ir,isn]/new_scratch.density_neutral[iz,ir,isn])
+                    end
                 end
+                temp6()
             catch e
                 global_catch_error(e)
             else
@@ -1405,11 +1423,14 @@ function rk_update!(scratch, pdf, moments, fields, boundary_distributions, vz, v
             advance.r_diffusion, advance.vz_diffusion)
 
         if moments.evolve_density && moments.enforce_conservation
-            begin_sn_r_z_region()
-            @loop_sn_r_z isn ir iz begin
-                @views hard_force_moment_constraints_neutral!(
-                    new_scratch.pdf_neutral[:,:,:,iz,ir,isn], moments, vz)
+            function temp7()
+                begin_sn_r_z_region()
+                @loop_sn_r_z isn ir iz begin
+                    @views hard_force_moment_constraints_neutral!(
+                        new_scratch.pdf_neutral[:,:,:,iz,ir,isn], moments, vz)
+                end
             end
+            temp7()
         end
 
         # update remaining velocity moments that are calculable from the evolved pdf
@@ -1419,10 +1440,13 @@ function rk_update!(scratch, pdf, moments, fields, boundary_distributions, vz, v
             # update the thermal speed
             begin_sn_r_z_region()
             try
-                @loop_sn_r_z isn ir iz begin
-                    moments.neutral.vth[iz,ir,isn] = sqrt(2.0 * new_scratch.pz_neutral[iz,ir,isn] /
-                                                          new_scratch.density_neutral[iz,ir,isn])
-            end
+                function temp8()
+                    @loop_sn_r_z isn ir iz begin
+                        moments.neutral.vth[iz,ir,isn] = sqrt(2.0 * new_scratch.pz_neutral[iz,ir,isn] /
+                                                              new_scratch.density_neutral[iz,ir,isn])
+                    end
+                end
+                temp8()
             catch e
                 global_catch_error(e)
             else
@@ -1560,26 +1584,32 @@ function ssp_rk!(pdf, scratch, t, t_input, vz, vr, vzeta, vpa, vperp, gyrophase,
     n_rk_stages = t_input.n_rk_stages
 
     first_scratch = scratch[1]
-    @loop_s_r_z_vperp_vpa is ir iz ivperp ivpa begin
-        first_scratch.pdf[ivpa,ivperp,iz,ir,is] = pdf.charged.norm[ivpa,ivperp,iz,ir,is]
+    function temp9()
+        @loop_s_r_z_vperp_vpa is ir iz ivperp ivpa begin
+            first_scratch.pdf[ivpa,ivperp,iz,ir,is] = pdf.charged.norm[ivpa,ivperp,iz,ir,is]
+        end
+        @loop_s_r_z is ir iz begin
+            first_scratch.density[iz,ir,is] = moments.charged.dens[iz,ir,is]
+            first_scratch.upar[iz,ir,is] = moments.charged.upar[iz,ir,is]
+            first_scratch.ppar[iz,ir,is] = moments.charged.ppar[iz,ir,is]
+        end
     end
-    @loop_s_r_z is ir iz begin
-        first_scratch.density[iz,ir,is] = moments.charged.dens[iz,ir,is]
-        first_scratch.upar[iz,ir,is] = moments.charged.upar[iz,ir,is]
-        first_scratch.ppar[iz,ir,is] = moments.charged.ppar[iz,ir,is]
-    end
+    temp9()
 
     if composition.n_neutral_species > 0
-        begin_sn_r_z_region()
-        @loop_sn_r_z_vzeta_vr_vz isn ir iz ivzeta ivr ivz begin
-            first_scratch.pdf_neutral[ivz,ivr,ivzeta,iz,ir,isn] = pdf.neutral.norm[ivz,ivr,ivzeta,iz,ir,isn]
+        function temp10()
+            begin_sn_r_z_region()
+            @loop_sn_r_z_vzeta_vr_vz isn ir iz ivzeta ivr ivz begin
+                first_scratch.pdf_neutral[ivz,ivr,ivzeta,iz,ir,isn] = pdf.neutral.norm[ivz,ivr,ivzeta,iz,ir,isn]
+            end
+            @loop_sn_r_z isn ir iz begin
+                first_scratch.density_neutral[iz,ir,isn] = moments.neutral.dens[iz,ir,isn]
+                first_scratch.uz_neutral[iz,ir,isn] = moments.neutral.uz[iz,ir,isn]
+                first_scratch.pz_neutral[iz,ir,isn] = moments.neutral.pz[iz,ir,isn]
+                # other neutral moments here if required
+            end
         end
-        @loop_sn_r_z isn ir iz begin
-            first_scratch.density_neutral[iz,ir,isn] = moments.neutral.dens[iz,ir,isn]
-            first_scratch.uz_neutral[iz,ir,isn] = moments.neutral.uz[iz,ir,isn]
-            first_scratch.pz_neutral[iz,ir,isn] = moments.neutral.pz[iz,ir,isn]
-            # other neutral moments here if required
-        end
+        temp10()
     end
     if moments.evolve_upar
         # moments may be read on all ranks, even though loop type is z_s, so need to
@@ -1610,39 +1640,51 @@ function ssp_rk!(pdf, scratch, t, t_input, vz, vr, vzeta, vpa, vperp, gyrophase,
     # update the pdf.norm and moments arrays as needed
     begin_s_r_z_region()
     final_scratch = scratch[istage]
-    @loop_s_r_z_vperp_vpa is ir iz ivperp ivpa begin
-        pdf.charged.norm[ivpa,ivperp,iz,ir,is] = final_scratch.pdf[ivpa,ivperp,iz,ir,is]
+    function temp11()
+        @loop_s_r_z_vperp_vpa is ir iz ivperp ivpa begin
+            pdf.charged.norm[ivpa,ivperp,iz,ir,is] = final_scratch.pdf[ivpa,ivperp,iz,ir,is]
+        end
+        @loop_s_r_z is ir iz begin
+            moments.charged.dens[iz,ir,is] = final_scratch.density[iz,ir,is]
+            moments.charged.upar[iz,ir,is] = final_scratch.upar[iz,ir,is]
+            moments.charged.ppar[iz,ir,is] = final_scratch.ppar[iz,ir,is]
+        end
     end
-    @loop_s_r_z is ir iz begin
-        moments.charged.dens[iz,ir,is] = final_scratch.density[iz,ir,is]
-        moments.charged.upar[iz,ir,is] = final_scratch.upar[iz,ir,is]
-        moments.charged.ppar[iz,ir,is] = final_scratch.ppar[iz,ir,is]
-    end
+    temp11()
     if composition.n_neutral_species > 0
         # No need to synchronize here as we only change neutral quantities and previous
         # region only changed plasma quantities.
-        begin_sn_r_z_region(no_synchronize=true)
-        @loop_sn_r_z_vzeta_vr_vz isn ir iz ivzeta ivr ivz begin
-            pdf.neutral.norm[ivz,ivr,ivzeta,iz,ir,isn] = final_scratch.pdf_neutral[ivz,ivr,ivzeta,iz,ir,isn]
+        function temp12()
+            begin_sn_r_z_region(no_synchronize=true)
+            @loop_sn_r_z_vzeta_vr_vz isn ir iz ivzeta ivr ivz begin
+                pdf.neutral.norm[ivz,ivr,ivzeta,iz,ir,isn] = final_scratch.pdf_neutral[ivz,ivr,ivzeta,iz,ir,isn]
+            end
+            @loop_sn_r_z isn ir iz begin
+                moments.neutral.dens[iz,ir,isn] = final_scratch.density_neutral[iz,ir,isn]
+                moments.neutral.uz[iz,ir,isn] = final_scratch.uz_neutral[iz,ir,isn]
+                moments.neutral.pz[iz,ir,isn] = final_scratch.pz_neutral[iz,ir,isn]
+            end
         end
-        @loop_sn_r_z isn ir iz begin
-            moments.neutral.dens[iz,ir,isn] = final_scratch.density_neutral[iz,ir,isn]
-            moments.neutral.uz[iz,ir,isn] = final_scratch.uz_neutral[iz,ir,isn]
-            moments.neutral.pz[iz,ir,isn] = final_scratch.pz_neutral[iz,ir,isn]
-        end
+        temp12()
         # for now update moments.neutral object directly for diagnostic moments
         # that are not used in Runga-Kutta steps
         update_neutral_pr!(moments.neutral.pr, moments.neutral.pr_updated, pdf.neutral.norm, vz, vr, vzeta, z, r, composition)
         update_neutral_pzeta!(moments.neutral.pzeta, moments.neutral.pzeta_updated, pdf.neutral.norm, vz, vr, vzeta, z, r, composition)
         # Update ptot (isotropic pressure)
         if r.n > 1 #if 2D geometry
-            @loop_sn_r_z isn ir iz begin
-                moments.neutral.ptot[iz,ir,isn] = (moments.neutral.pz[iz,ir,isn] + moments.neutral.pr[iz,ir,isn] + moments.neutral.pzeta[iz,ir,isn])/3.0
+            function temp13()
+                @loop_sn_r_z isn ir iz begin
+                    moments.neutral.ptot[iz,ir,isn] = (moments.neutral.pz[iz,ir,isn] + moments.neutral.pr[iz,ir,isn] + moments.neutral.pzeta[iz,ir,isn])/3.0
+                end
             end
+            temp13()
         else # 1D model
-            @loop_sn_r_z isn ir iz begin
-                moments.neutral.ptot[iz,ir,isn] = moments.neutral.pz[iz,ir,isn]
+            function temp14()
+                @loop_sn_r_z isn ir iz begin
+                    moments.neutral.ptot[iz,ir,isn] = moments.neutral.pz[iz,ir,isn]
+                end
             end
+            temp14()
         end
         # get particle fluxes (n.b. bad naming convention uz -> means -> n uz here)
         update_neutral_ur!(moments.neutral.ur, moments.neutral.ur_updated,
@@ -1652,12 +1694,14 @@ function ssp_rk!(pdf, scratch, t, t_input, vz, vr, vzeta, vpa, vperp, gyrophase,
                               moments.neutral.dens, pdf.neutral.norm, vz, vr, vzeta, z,
                               r, composition)
         try #below loop can cause DomainError if ptot < 0 or density < 0, so exit cleanly if possible
-            @loop_sn_r_z isn ir iz begin
-                # update density using last density from Runga-Kutta stages
-                moments.neutral.dens[iz,ir,isn] = final_scratch.density_neutral[iz,ir,isn]
-                # get vth for neutrals
-                moments.neutral.vth[iz,ir,isn] = sqrt(2.0*moments.neutral.ptot[iz,ir,isn]/moments.neutral.dens[iz,ir,isn])
+            function temp15()
+                @loop_sn_r_z isn ir iz begin # update density using last density from Runga-Kutta stages
+                    moments.neutral.dens[iz,ir,isn] = final_scratch.density_neutral[iz,ir,isn]
+                    # get vth for neutrals
+                    moments.neutral.vth[iz,ir,isn] = sqrt(2.0*moments.neutral.ptot[iz,ir,isn]/moments.neutral.dens[iz,ir,isn])
+                end
             end
+            temp15()
         catch e
             if global_size[] > 1
                 println("ERROR: error at line 724 of time_advance.jl")

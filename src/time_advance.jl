@@ -758,6 +758,9 @@ function time_advance!(pdf, scratch, t, t_input, vz, vr, vzeta, vpa, vperp, gyro
             rm(t_input.stopfile)
         end
     end
+    if isfile(t_input.stopfile * "now") && global_rank[] == 0
+        rm(t_input.stopfile * "now")
+    end
 
     @serial_region begin
         if global_rank[] == 0
@@ -791,6 +794,12 @@ function time_advance!(pdf, scratch, t, t_input, vz, vr, vzeta, vpa, vperp, gyro
 
         if i == t_input.nstep
             # Ensure all output is written at the final step
+            finish_now = true
+        end
+
+        if isfile(t_input.stopfile * "now")
+            # Stop cleanly if a file called 'stop' was created
+            println("Found 'stopnow' file $(t_input.stopfile * "now"), aborting run")
             finish_now = true
         end
 

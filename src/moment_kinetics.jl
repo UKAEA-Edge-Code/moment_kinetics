@@ -133,7 +133,7 @@ function run_moment_kinetics(to::Union{TimerOutput,Nothing}, input_dict=Dict())
             display(stacktrace(catch_backtrace()))
             flush(stdout)
             flush(stderr)
-            MPI.Abort(comm_world, 1)
+            #MPI.Abort(comm_world, 1)
         end
     end
 
@@ -353,7 +353,7 @@ function restart_moment_kinetics(input_dict::Dict,
             display(stacktrace(catch_backtrace()))
             flush(stdout)
             flush(stderr)
-            MPI.Abort(comm_world, 1)
+            #MPI.Abort(comm_world, 1)
         end
     end
 

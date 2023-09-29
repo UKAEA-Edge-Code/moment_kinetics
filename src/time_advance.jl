@@ -1709,7 +1709,7 @@ function ssp_rk!(pdf, scratch, t, t_input, vz, vr, vzeta, vpa, vperp, gyrophase,
                 display(stacktrace(catch_backtrace()))
                 flush(stdout)
                 flush(stderr)
-                MPI.Abort(comm_world, 1)
+                #MPI.Abort(comm_world, 1)
             end
             rethrow(e)
         end

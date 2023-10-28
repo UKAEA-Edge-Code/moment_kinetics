@@ -79,8 +79,8 @@ vz_discretization = "chebyshev_pseudospectral"
 
 [ion_source]
 active = true
-z_profile = "gaussian"
-z_width = 0.125
+z_profile = "parabolic" #"gaussian"
+z_width = 0.25 #0.125
 source_strength = 2.0
 source_T = 2.0
 

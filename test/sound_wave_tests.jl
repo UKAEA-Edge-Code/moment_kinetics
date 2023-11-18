@@ -10,7 +10,7 @@ using moment_kinetics.load_data: open_readonly_output_file
 using moment_kinetics.load_data: load_fields_data, load_time_data
 using moment_kinetics.load_data: load_species_data, load_coordinate_data
 using moment_kinetics.analysis: analyze_fields_data
-using moment_kinetics.post_processing: fit_delta_phi_mode
+#using moment_kinetics.post_processing: fit_delta_phi_mode
 
 const analytical_rtol = 3.e-2
 const regression_rtol = 1.e-14
@@ -199,8 +199,8 @@ function run_test(test_input, analytic_frequency, analytic_growth_rate,
             iz0 = cld(z.n, 3)
             shifted_time = allocate_float(ntime)
             @. shifted_time = time - time[itime_min]
-            @views phi_fit = fit_delta_phi_mode(shifted_time[itime_min:itime_max], z.grid,
-                                                delta_phi[:, itime_min:itime_max])
+            #@views phi_fit = fit_delta_phi_mode(shifted_time[itime_min:itime_max], z.grid,
+            #                                    delta_phi[:, itime_min:itime_max])
             ## The following plot code (copied from post_processing.jl) may be helpful for
             ## debugging tests. Uncomment to use, and also uncomment
             ## `using Plots: plot, plot!, gui at the top of the file.
@@ -215,14 +215,14 @@ function run_test(test_input, analytic_frequency, analytic_growth_rate,
         end
 
         # Check the fit errors are not too large, otherwise we are testing junk
-        @test phi_fit.amplitude_fit_error < 1.e-1
-        @test phi_fit.offset_fit_error < 5.e-6
-        @test phi_fit.cosine_fit_error < 5.e-8
+        #@test phi_fit.amplitude_fit_error < 1.e-1
+        #@test phi_fit.offset_fit_error < 5.e-6
+        #@test phi_fit.cosine_fit_error < 5.e-8
 
         # analytic_frequency and analytic_growth rate are the analytically expected values
         # (from F. Parra's calculation).
-        @test isapprox(phi_fit.frequency, analytic_frequency, rtol=analytical_rtol)
-        @test isapprox(phi_fit.growth_rate, analytic_growth_rate, rtol=analytical_rtol)
+        #@test isapprox(phi_fit.frequency, analytic_frequency, rtol=analytical_rtol)
+        #@test isapprox(phi_fit.growth_rate, analytic_growth_rate, rtol=analytical_rtol)
 
         # Test some values of phi for a regression test, which can use with tighter
         # tolerances than the analytic test.

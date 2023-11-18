@@ -37,7 +37,6 @@ jobs:
   #        # moment.
   #        sed -i -e "s/_debug_level = get_options.*/_debug_level = 2/" src/debugging.jl
 
-  #        pip3 install --user matplotlib
   #        julia --project -e 'using MPIPreferences; MPIPreferences.use_system_binary()'
   #        julia --project -e 'using Pkg; Pkg.build("MPI"; verbose=true)'
 
@@ -64,7 +63,6 @@ jobs:
       - uses: mpi4py/setup-mpi@v1
         with:
           mpi: 'openmpi'
-      - uses: actions/setup-python@v2
       - uses: julia-actions/setup-julia@v1
         with:
           version: '1.8'
@@ -80,7 +78,6 @@ jobs:
           # moment.
           sed -i -e "s/_debug_level = get_options.*/_debug_level = 2/" src/debugging.jl
 
-          pip3 install --user matplotlib
           julia --project -e 'using MPIPreferences; MPIPreferences.use_system_binary()'
           julia --project -e 'using Pkg; Pkg.build("MPI"; verbose=true)'
 
@@ -107,7 +104,6 @@ jobs:
       - uses: mpi4py/setup-mpi@v1
         with:
           mpi: 'openmpi'
-      - uses: actions/setup-python@v2
       - uses: julia-actions/setup-julia@v1
         with:
           version: '1.8'
@@ -123,7 +119,6 @@ jobs:
           # moment.
           sed -i -e "s/_debug_level = get_options.*/_debug_level = 2/" src/debugging.jl
 
-          pip3 install --user matplotlib
           julia --project -e 'using MPIPreferences; MPIPreferences.use_system_binary()'
           julia --project -e 'using Pkg; Pkg.build("MPI"; verbose=true)'
 
@@ -150,7 +145,6 @@ jobs:
       - uses: mpi4py/setup-mpi@v1
         with:
           mpi: 'openmpi'
-      - uses: actions/setup-python@v2
       - uses: julia-actions/setup-julia@v1
         with:
           version: '1.8'
@@ -166,7 +160,6 @@ jobs:
           # moment.
           sed -i -e "s/_debug_level = get_options.*/_debug_level = 2/" src/debugging.jl
 
-          pip3 install --user matplotlib
           julia --project -e 'using MPIPreferences; MPIPreferences.use_system_binary()'
           julia --project -e 'using Pkg; Pkg.build("MPI"; verbose=true)'
 
@@ -193,7 +186,6 @@ jobs:
       - uses: mpi4py/setup-mpi@v1
         with:
           mpi: 'openmpi'
-      - uses: actions/setup-python@v2
       - uses: julia-actions/setup-julia@v1
         with:
           version: '1.8'
@@ -209,7 +201,6 @@ jobs:
           # moment.
           sed -i -e "s/_debug_level = get_options.*/_debug_level = 2/" src/debugging.jl
 
-          pip3 install --user matplotlib
           julia --project -e 'using MPIPreferences; MPIPreferences.use_system_binary()'
           julia --project -e 'using Pkg; Pkg.build("MPI"; verbose=true)'
 

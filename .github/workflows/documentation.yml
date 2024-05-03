@@ -15,7 +15,7 @@ jobs:
       - uses: julia-actions/setup-julia@latest
         with:
           version: '1.10'
-      - uses: julia-actions/cache@v1
+      - uses: julia-actions/cache@latest
       - name: Install dependencies
         run: |
           pip3 install --user matplotlib
